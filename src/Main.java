@@ -5,8 +5,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class Main {
     public static void main(String[] args) throws InterruptedException {
-        int clientCount = 25;
-        int iterationsPerClient = 100;
+        int clientCount = 500;
+        int iterationsPerClient = 500;
         int rounds = 20;
         long raceWindowNanos = 1_000_000; // 1 ms of simulated work; set to 0 to disable.
         int failedRounds = 0;
@@ -28,9 +28,9 @@ public class Main {
                                     long raceWindowNanos) throws InterruptedException {
         // Fresh inventory prevents sold-out concerts from making the rest of the run idle.
         List<Concert> concerts = List.of(
-                new Concert(1, "Rock Night", 4),
-                new Concert(2, "Jazz Evening", 4),
-                new Concert(3, "Electronic Live", 4));
+                new Concert(1, "Rock Night", 154),
+                new Concert(2, "Jazz Evening", 234),
+                new Concert(3, "Electronic Live", 413));
         BookingService service = new BookingService(concerts, raceWindowNanos);
         List<Integer> concertIds = concerts.stream().map(concert -> concert.id).toList();
 

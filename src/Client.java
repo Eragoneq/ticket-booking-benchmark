@@ -34,6 +34,10 @@ public final class Client implements Runnable {
                 int concertId = concertIds.get(random.nextInt(5) == 0
                         ? random.nextInt(concertIds.size()) : 0);
                 List<Integer> available = service.listAvailableSeats(concertId);
+                // Only 2% attempts people actually try to buy
+//                if (random.nextInt(50) > 0) {
+//                    continue;
+//                }
                 if (available.isEmpty()) {
                     continue;
                 }

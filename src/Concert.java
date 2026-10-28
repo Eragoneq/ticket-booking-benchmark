@@ -19,15 +19,20 @@ public final class Concert {
         this.name = name;
         this.totalSeats = totalSeats;
         for (int seatId = 1; seatId <= totalSeats; seatId++) {
-            seats.put(seatId, new Seat());
+            seats.put(seatId, new Seat(seatId));
         }
     }
 
     static final class Seat {
+        final int id;
         SeatStatus status = SeatStatus.FREE;
         String reservedBy;
         // Diagnostic history: a seat can look SOLD even after multiple successful purchases.
         final AtomicInteger saleCount = new AtomicInteger();
+
+        Seat(int id) {
+            this.id = id;
+        }
         // TODO: Add a reservation deadline when implementing expiry.
     }
 }

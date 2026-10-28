@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.LockSupport;
 
-/** Deliberately unsynchronized starting point for the concurrency exercise. */
 public final class BookingService {
     private final Map<Integer, Concert> concerts = new HashMap<>();
     private final long raceWindowNanos;
@@ -27,48 +26,50 @@ public final class BookingService {
 
     // TODO: Allow concurrent readers while excluding seat mutations.
     public List<Integer> listAvailableSeats(int concertId) {
-        List<Integer> available = new ArrayList<>();
-        concert(concertId).seats.forEach((seatId, seat) -> {
-            if (seat.status == SeatStatus.FREE) {
-                available.add(seatId);
-            }
-        });
-        return available;
+        var seats = concert(concertId).seats.values();
+        synchronized (seats) {
+            return seats.stream().filter(x -> x.status == SeatStatus.FREE).map(x -> x.id).toList();
+        }
     }
 
     public boolean reserve(int concertId, int seatId, String clientId) {
         Concert.Seat seat = seat(concertId, seatId);
-        // TODO: Make the check and update atomic.
-        if (seat.status != SeatStatus.FREE) {
-            return false;
+        synchronized (seat) {
+            if (seat.status != SeatStatus.FREE) {
+                return false;
+            }
+            simulateWork();
+            seat.status = SeatStatus.RESERVED;
+            seat.reservedBy = clientId;
         }
-        simulateWork();
-        seat.status = SeatStatus.RESERVED;
-        seat.reservedBy = clientId;
         return true;
     }
 
     public boolean buy(int concertId, int seatId, String clientId) {
         Concert.Seat seat = seat(concertId, seatId);
-        if (seat.status != SeatStatus.RESERVED || !clientId.equals(seat.reservedBy)) {
-            return false;
+        synchronized (seat) {
+            if (seat.status != SeatStatus.RESERVED || !clientId.equals(seat.reservedBy)) {
+                return false;
+            }
+            simulateWork();
+            seat.status = SeatStatus.SOLD;
+            seat.reservedBy = null;
+            seat.saleCount.incrementAndGet();
+            concert(concertId).soldCount.incrementAndGet();
         }
-        simulateWork();
-        seat.status = SeatStatus.SOLD;
-        seat.reservedBy = null;
-        seat.saleCount.incrementAndGet();
-        concert(concertId).soldCount.incrementAndGet();
         return true;
     }
 
     public boolean cancel(int concertId, int seatId, String clientId) {
         Concert.Seat seat = seat(concertId, seatId);
-        if (seat.status != SeatStatus.RESERVED || !clientId.equals(seat.reservedBy)) {
-            return false;
+        synchronized (seat) {
+            if (seat.status != SeatStatus.RESERVED || !clientId.equals(seat.reservedBy)) {
+                return false;
+            }
+            simulateWork();
+            seat.status = SeatStatus.FREE;
+            seat.reservedBy = null;
         }
-        simulateWork();
-        seat.status = SeatStatus.FREE;
-        seat.reservedBy = null;
         return true;
     }
 
